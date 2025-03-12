@@ -4,13 +4,13 @@
 	"main": "src/index.js",
 	"compatibility_date": "2025-03-11",
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "db",
-      "database_id": "3b9ac087-fad2-4f41-ab5a-bc993eb8e299"
-    }
-  ]
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "db",
+			"database_id": "3b9ac087-fad2-4f41-ab5a-bc993eb8e299",
+		},
+	],
 }
