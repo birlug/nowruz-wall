@@ -1,21 +1,23 @@
 const corsHeaders = {
-	'Access-Control-Allow-Headers': '*',
-	'Access-Control-Allow-Methods': 'POST',
 	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export default {
 	async fetch(request, env, ctx) {
 		try {
 			if (request.method === 'OPTIONS') {
-				return new Response('ok', {
-					headers: corsHeaders,
-				});
+				// handle preflight CORS requests
+        return new Response(null, {
+          status: 204,
+          headers: corsHeaders,
+        })
 			}
 
 			if (request.method === 'GET') {
 				const { results } = await env.DB.prepare('SELECT name, color, x, y FROM Points').all();
-				return Response.json(results);
+				return response(results, 200);
 			}
 
 			const { initData, color, x, y } = await request.json();
@@ -24,15 +26,17 @@ export default {
 
 			const isValid = await validate(data, env.BOT_TOKEN);
 			if (!isValid) {
-				return Response.json({ error: 'هش نامعتبر' }, { status: 403 });
+				return response({ error: 'هش نامعتبر' }, 403);
 			}
 
-			const { results } = await env.DB.prepare('SELECT * FROM Points WHERE (x = ? AND y = ?) OR telegramId = ?').bind(x, y, user.id).all();
+			const { results } = await env.DB.prepare('SELECT * FROM Points WHERE (x = ? AND y = ?) OR telegramId = ?')
+        .bind(x, y, user.id)
+        .all();
 			if (results.length > 0) {
-				return Response.json({ error: 'مجاز به ارسال دوباره نیستید' }, { status: 403 });
+				return response({ error: 'مجاز به ارسال دوباره نیستید' }, 403);
 			}
 			if (color >= 8 || color < 0) {
-				return Response.json({ error: 'رنگ نامعتبر' }, { status: 400 });
+				return response({ error: 'رنگ نامعتبر' }, 400);
 			}
 
 			const name = [user.first_name, user.last_name].filter(Boolean).join(' ');
@@ -40,13 +44,17 @@ export default {
 				.bind(user.id, name, x, y, color)
 				.run();
 
-			return Response.json({ message: 'successful' });
+			return response({ message: 'successful' }, 200);
 		} catch (error) {
 			console.log(error);
-			return Response.json({ error: 'internal server error' }, { status: 500 });
+			return response({ error: 'internal server error' }, 500);
 		}
 	},
 };
+
+function response(message, status) {
+	return Response.json(message, { status, headers: corsHeaders });
+}
 
 function transformInitData(initData) {
 	return Object.fromEntries(new URLSearchParams(initData));
